@@ -297,3 +297,12 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* J'ai fini */
+.ready { display: flex; align-items: center; gap: 14px; font-weight: 600; color: var(--muted); }
+.ready strong { color: var(--ink); font-size: 1.2em; }
+.ready__track { flex: 1; max-width: 420px; height: 10px; border-radius: 999px; background: var(--bar-track); overflow: hidden; }
+.ready__fill { height: 100%; background: var(--octo-turquoise); border-radius: 999px; transition: width 0.5s ease; }
+.ready-action { margin-top: 8px; display: grid; gap: 6px; }
+.btn--done { background: var(--accent-soft); border-color: var(--octo-turquoise); color: var(--success); }
+.stage > .ready { justify-self: center; width: min(620px, 100%); }

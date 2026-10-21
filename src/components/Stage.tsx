@@ -1,5 +1,5 @@
 import { PART_LABELS, STEPS, WORKSHOP, type Step } from '../workshop'
-import { choiceResults, contributorsCount, voteResults, voteTargets } from '../lib/results'
+import { choiceResults, contributorsCount, readyCount, voteResults, voteTargets } from '../lib/results'
 import type { SessionData } from '../types'
 import { Bars } from './Bars'
 import { JoinInfo } from './JoinInfo'
@@ -41,6 +41,9 @@ export function Stage({ data, grouping, manifestoDraft }: Props) {
     <div className="stage">
       <StepHeader step={step} index={session.step_index} timerEnd={session.timer_end} />
       <StageBody step={step} data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
+      {session.phase === 'open' && step.kind !== 'manifesto' && (
+        <ReadyMeter ready={readyCount(step.id, data.participants)} total={data.participants.length} />
+      )}
     </div>
   )
 }
@@ -146,6 +149,19 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
       )
     }
   }
+}
+
+export function ReadyMeter({ ready, total }: { ready: number; total: number }) {
+  return (
+    <div className="ready">
+      <div className="ready__track">
+        <div className="ready__fill" style={{ width: `${total ? (ready / total) * 100 : 0}%` }} />
+      </div>
+      <span>
+        <strong>{ready}</strong> / {total} ont fini
+      </span>
+    </div>
+  )
 }
 
 function HiddenWall({ count, caption }: { count: number; caption: string }) {

@@ -14,6 +14,7 @@ import {
 import { getApiKey, setApiKey } from '../lib/aiKey'
 import { downloadMarkdown, sessionMarkdown } from '../lib/exportMd'
 import { participantUrl, screenUrl } from '../lib/routes'
+import { readyCount } from '../lib/results'
 import { useSession } from '../lib/useSession'
 import type { SessionData } from '../types'
 import type { ThemeEditor } from '../components/PostitWall'
@@ -249,6 +250,11 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           {step && (
             <section className="panel__section">
               <h2>Étape en cours</h2>
+              {step.kind !== 'manifesto' && session.phase === 'open' && (
+                <p className="muted">
+                  <strong>{readyCount(step.id, data.participants)}</strong> / {data.participants.length} ont fini
+                </p>
+              )}
               {step.kind !== 'manifesto' && (
                 <button className="btn btn--primary btn--block" onClick={togglePhase} title="R">
                   {session.phase === 'open'

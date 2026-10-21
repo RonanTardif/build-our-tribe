@@ -1,8 +1,12 @@
 import type { ChoiceStep, VoteStep } from '../workshop'
-import type { ChoiceRow, Contribution, Theme, VoteRow } from '../types'
+import type { ChoiceRow, Contribution, Participant, Theme, VoteRow } from '../types'
 
 export function contributorsCount(stepId: string, contributions: Contribution[]) {
   return new Set(contributions.filter((c) => c.step_id === stepId).map((c) => c.participant_id)).size
+}
+
+export function readyCount(stepId: string, participants: Participant[]) {
+  return participants.filter((p) => p.ready_step === stepId).length
 }
 
 export function choiceResults(step: ChoiceStep, choices: ChoiceRow[]) {

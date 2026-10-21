@@ -34,6 +34,13 @@ export async function joinSession(sessionId: string, participantId: string) {
   fail(error)
 }
 
+export async function setReady(sessionId: string, participantId: string, stepId: string | null) {
+  const { error } = await supabase
+    .from('participants')
+    .upsert({ session_id: sessionId, participant_id: participantId, ready_step: stepId }, { onConflict: 'session_id,participant_id' })
+  fail(error)
+}
+
 async function updateSession(sessionId: string, patch: Partial<Session>) {
   const { error } = await supabase.from('sessions').update(patch).eq('id', sessionId)
   fail(error)

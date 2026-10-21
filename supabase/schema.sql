@@ -16,6 +16,7 @@ create table public.sessions (
 create table public.participants (
   session_id uuid not null references public.sessions (id) on delete cascade,
   participant_id uuid not null,
+  ready_step text,
   created_at timestamptz not null default now(),
   primary key (session_id, participant_id)
 );

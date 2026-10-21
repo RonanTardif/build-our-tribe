@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { STEPS, WORKSHOP, type ChoiceStep, type PostitStep, type Step, type VoteStep } from '../workshop'
-import { addContribution, deleteContribution, joinSession, saveChoice, saveVote, updateContribution } from '../lib/api'
+import { addContribution, deleteContribution, joinSession, saveChoice, saveVote, setReady, updateContribution } from '../lib/api'
 import { choiceResults, spentPoints, voteResults, voteTargets } from '../lib/results'
 import { participantId } from '../lib/storage'
 import { useSession } from '../lib/useSession'
@@ -53,6 +53,38 @@ export function Participant({ code }: { code: string }) {
 }
 
 function ParticipantStep(props: StepProps<Step>) {
+  const { step, data } = props
+  return (
+    <>
+      <StepContent {...props} />
+      {data.session.phase === 'open' && step.kind !== 'manifesto' && <ReadyButton {...props} />}
+    </>
+  )
+}
+
+function ReadyButton({ step, data, pid, refresh }: StepProps<Step>) {
+  const ready = data.participants.some((p) => p.participant_id === pid && p.ready_step === step.id)
+  const [error, setError] = useState<string | null>(null)
+  const toggle = async () => {
+    setError(null)
+    try {
+      await setReady(data.session.id, pid, ready ? null : step.id)
+      refresh()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+  return (
+    <div className="ready-action">
+      <button className={`btn btn--block ${ready ? 'btn--done' : 'btn--primary'}`} onClick={toggle}>
+        {ready ? "C'est noté ✓ · je reprends la main" : "J'ai fini"}
+      </button>
+      {error && <p className="error">{error}</p>}
+    </div>
+  )
+}
+
+function StepContent(props: StepProps<Step>) {
   const { step } = props
   switch (step.kind) {
     case 'postit':

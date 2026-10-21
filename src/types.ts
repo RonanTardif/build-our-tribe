@@ -12,6 +12,11 @@ export type Session = {
   created_at: string
 }
 
+export type Participant = {
+  participant_id: string
+  ready_step: string | null
+}
+
 export type Contribution = {
   id: string
   session_id: string
@@ -46,7 +51,7 @@ export type VoteRow = {
 
 export type SessionData = {
   session: Session
-  participants: string[]
+  participants: Participant[]
   contributions: Contribution[]
   themes: Theme[]
   choices: ChoiceRow[]

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { uuid } from './storage'
-import type { ChoiceRow, Contribution, Session, SessionData, Theme, VoteRow } from '../types'
+import type { ChoiceRow, Contribution, Participant, Session, SessionData, Theme, VoteRow } from '../types'
 
 export type SessionState =
   | { status: 'loading' }
@@ -18,7 +18,7 @@ async function fetchSession(code: string): Promise<SessionData | null> {
 
   const id = (session as Session).id
   const [participants, contributions, themes, choices, votes] = await Promise.all([
-    supabase.from('participants').select('participant_id').eq('session_id', id),
+    supabase.from('participants').select('participant_id, ready_step').eq('session_id', id),
     supabase.from('contributions').select('*').eq('session_id', id).order('created_at'),
     supabase.from('themes').select('*').eq('session_id', id).order('created_at'),
     supabase.from('choices').select('*').eq('session_id', id),
@@ -30,7 +30,7 @@ async function fetchSession(code: string): Promise<SessionData | null> {
 
   return {
     session: session as Session,
-    participants: (participants.data ?? []).map((p: { participant_id: string }) => p.participant_id),
+    participants: (participants.data ?? []) as Participant[],
     contributions: (contributions.data ?? []) as Contribution[],
     themes: (themes.data ?? []) as Theme[],
     choices: (choices.data ?? []) as ChoiceRow[],
