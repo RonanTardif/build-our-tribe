@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { isConfigured } from './lib/supabase'
-import { parseRoute } from './lib/routes'
+import { adoptQueryCode, parseRoute } from './lib/routes'
 import { Facilitator } from './views/Facilitator'
 import { Home } from './views/Home'
 import { Participant } from './views/Participant'
 import { Screen } from './views/Screen'
 
 export function App() {
-  const [route, setRoute] = useState(() => parseRoute(window.location.hash))
+  const [route, setRoute] = useState(() => {
+    adoptQueryCode()
+    return parseRoute(window.location.hash)
+  })
 
   useEffect(() => {
     const onChange = () => setRoute(parseRoute(window.location.hash))
