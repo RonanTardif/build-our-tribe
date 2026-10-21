@@ -10,13 +10,13 @@ chacun contribue anonymement depuis son PC, l'animateur pilote les étapes et pr
 
 ## Déroulé (90 min)
 
-| Partie | Étape | Type | Durée |
+| Partie | Étape (par défaut) | Type | Durée |
 |---|---|---|---|
 | Explorer | Ce qui nous anime | post-its | 10′ |
 | Explorer | Pourquoi sommes-nous ensemble ? | post-its | 15′ |
 | Explorer | Qui voulons-nous devenir ? | post-its | 10′ |
 | Décider | Nos convictions fortes | vote 5 points sur les thèmes des 3 étapes précédentes | 15′ |
-| Décider | Nos territoires | choix (3 max parmi 6) | 5′ |
+| Décider | Nos territoires | choix (3 max, les participants peuvent en proposer) | 5′ |
 | Décider | La mission rêvée | post-its | 10′ |
 | Décider | Passer à l'action | post-its | 10′ |
 | Décider | Nos premières actions | vote 3 points | 5′ |
