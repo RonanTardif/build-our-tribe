@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { uuid } from './storage'
-import type { ChoiceRow, Contribution, Participant, Session, SessionData, Theme, VoteRow } from '../types'
+import type { ChoiceRow, Contribution, Participant, Player, Session, SessionData, Theme, VoteRow } from '../types'
 
 export type SessionState =
   | { status: 'loading' }
@@ -9,7 +9,7 @@ export type SessionState =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: SessionData }
 
-const TABLES = ['sessions', 'participants', 'contributions', 'themes', 'choices', 'votes'] as const
+const TABLES = ['sessions', 'participants', 'contributions', 'themes', 'choices', 'votes', 'players'] as const
 
 async function fetchSession(code: string): Promise<SessionData | null> {
   const { data: session, error } = await supabase.from('sessions').select('*').eq('code', code).maybeSingle()
@@ -17,14 +17,15 @@ async function fetchSession(code: string): Promise<SessionData | null> {
   if (!session) return null
 
   const id = (session as Session).id
-  const [participants, contributions, themes, choices, votes] = await Promise.all([
+  const [participants, contributions, themes, choices, votes, players] = await Promise.all([
     supabase.from('participants').select('participant_id, ready_step').eq('session_id', id),
     supabase.from('contributions').select('*').eq('session_id', id).order('created_at'),
     supabase.from('themes').select('*').eq('session_id', id).order('created_at'),
     supabase.from('choices').select('*').eq('session_id', id),
     supabase.from('votes').select('*').eq('session_id', id),
+    supabase.from('players').select('player_id, name, tokens').eq('session_id', id),
   ])
-  for (const result of [participants, contributions, themes, choices, votes]) {
+  for (const result of [participants, contributions, themes, choices, votes, players]) {
     if (result.error) throw new Error(result.error.message)
   }
 
@@ -35,6 +36,7 @@ async function fetchSession(code: string): Promise<SessionData | null> {
     themes: (themes.data ?? []) as Theme[],
     choices: (choices.data ?? []) as ChoiceRow[],
     votes: (votes.data ?? []) as VoteRow[],
+    players: (players.data ?? []) as Player[],
   }
 }
 
@@ -74,19 +76,20 @@ export function useSession(code: string) {
         }
       }
     }
-    const schedule = () => {
+    // Les jetons bougent beaucoup pendant un rush : on les regroupe pour ne pas saturer la base.
+    const schedule = (delay = 120) => {
       window.clearTimeout(debounce)
-      debounce = window.setTimeout(load, 120)
+      debounce = window.setTimeout(load, delay)
     }
     reload.current = () => void load()
 
     let channel = supabase.channel(`session-${code}-${uuid()}`)
     for (const table of TABLES) {
-      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, schedule)
+      channel = channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => schedule(table === 'players' ? 800 : 120))
     }
     // « SUBSCRIBED » arrive avant que l'écoute Postgres soit active : on recharge aussi quand
     // le serveur confirme l'abonnement, pour ne rien rater entre les deux.
-    channel = channel.on('system', {}, schedule)
+    channel = channel.on('system', {}, () => schedule())
     channel.subscribe((status) => {
       subscribed = status === 'SUBSCRIBED'
       if (subscribed) schedule()

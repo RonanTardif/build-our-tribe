@@ -12,6 +12,7 @@ import { StepHeader, interactive } from '../components/Stage'
 import { WordCloud } from '../components/WordCloud'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
+import { PlayerHud } from '../components/Game'
 
 type StepProps<S extends Step> = { step: S; data: SessionData; pid: string; refresh: () => void }
 
@@ -50,6 +51,7 @@ export function Participant({ code }: { code: string }) {
           </div>
         )}
       </main>
+      <PlayerHud data={data} />
     </div>
   )
 }

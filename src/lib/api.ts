@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { uuid } from './storage'
 import { DEFAULT_STEPS, type Step } from '../workshop'
-import type { Phase, Session, Theme } from '../types'
+import type { GameState, Phase, Session, Theme } from '../types'
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 
@@ -55,6 +55,7 @@ export function goToStep(sessionId: string, stepIndex: number, minutes: number |
 export const setPhase = (sessionId: string, phase: Phase) => updateSession(sessionId, { phase })
 export const setTimer = (sessionId: string, timer_end: string | null) => updateSession(sessionId, { timer_end })
 export const setManifesto = (sessionId: string, manifesto: string) => updateSession(sessionId, { manifesto })
+export const setGame = (sessionId: string, game: GameState) => updateSession(sessionId, { game })
 export const saveSteps = (sessionId: string, steps: Step[], step_index: number) => updateSession(sessionId, { steps, step_index })
 
 export async function addContribution(sessionId: string, stepId: string, participantId: string, text: string): Promise<string> {
@@ -124,5 +125,17 @@ export async function saveVote(sessionId: string, stepId: string, participantId:
   const { error } = await supabase
     .from('votes')
     .upsert({ session_id: sessionId, step_id: stepId, participant_id: participantId, allocation, updated_at: new Date().toISOString() })
+  fail(error)
+}
+
+export async function savePlayer(sessionId: string, playerId: string, name: string | null, tokens: number) {
+  const { error } = await supabase
+    .from('players')
+    .upsert({ session_id: sessionId, player_id: playerId, name, tokens, updated_at: new Date().toISOString() })
+  fail(error)
+}
+
+export async function resetPlayers(sessionId: string) {
+  const { error } = await supabase.from('players').delete().eq('session_id', sessionId)
   fail(error)
 }

@@ -9,7 +9,9 @@ import {
   goToStep,
   renameTheme,
   replaceThemes,
+  resetPlayers,
   saveSteps,
+  setGame,
   setManifesto,
   setPhase,
   setTimer,
@@ -21,11 +23,12 @@ import { participantUrl, screenUrl } from '../lib/routes'
 import { choiceOptions, readyCount } from '../lib/results'
 import { FACILITATOR_ID } from '../lib/storage'
 import { useSession } from '../lib/useSession'
-import type { SessionData } from '../types'
+import type { GameState, SessionData } from '../types'
 import type { ThemeEditor } from '../components/PostitWall'
 import { JoinInfo } from '../components/JoinInfo'
 import { Stage, interactive } from '../components/Stage'
 import { StepsEditor } from '../components/StepsEditor'
+import { BallLayer, Leaderboard } from '../components/Game'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
 
@@ -86,6 +89,24 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
     void run('step', () => goToStep(session.id, index, steps[index]?.minutes ?? null))
   }
 
+  const game = session.game ?? {}
+  const [rushing, setRushing] = useState(false)
+  const updateGame = (patch: Partial<GameState>) => run('game', () => setGame(session.id, { ...game, ...patch }))
+  const rush = () => {
+    if (rushing) return
+    setRushing(true)
+    window.setTimeout(() => setRushing(false), 10_000)
+    void updateGame({ rushAt: new Date().toISOString() })
+  }
+  const resetTokens = () => {
+    if (!window.confirm('Remettre tous les jetons à zéro ?')) return
+    void run('game', async () => {
+      await setGame(session.id, { ...game, resetAt: new Date().toISOString() })
+      await resetPlayers(session.id)
+    })
+  }
+  const ranking = [...data.players].filter((p) => p.tokens > 0).sort((a, b) => b.tokens - a.tokens)
+
   const togglePhase = () => void run('phase', () => setPhase(session.id, session.phase === 'open' ? 'revealed' : 'open'))
 
   // Raccourcis : flèches et PageUp/PageDown (les clickers de présentation envoient ces touches).
@@ -113,6 +134,10 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
         case 'q':
         case 'Q':
           setShowQr((v) => !v)
+          break
+        case 'b':
+        case 'B':
+          rush()
           break
         case 'Escape':
           setShowQr(false)
@@ -249,7 +274,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
               <button className="btn btn--small" onClick={() => setShowQr(true)}>QR code</button>
             </div>
             <p className="shortcuts">
-              <kbd>←</kbd> <kbd>→</kbd> étapes · <kbd>R</kbd> révéler · <kbd>P</kbd> présentation · <kbd>Q</kbd> QR code
+              <kbd>←</kbd> <kbd>→</kbd> étapes · <kbd>R</kbd> révéler · <kbd>P</kbd> présentation · <kbd>Q</kbd> QR code · <kbd>B</kbd> rush
             </p>
           </section>
 
@@ -406,6 +431,31 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           )}
 
           <section className="panel__section">
+            <h2>Jeu des balles 🍺</h2>
+            <label className="check">
+              <input type="checkbox" checked={game.balls !== false} onChange={(e) => void updateGame({ balls: e.target.checked })} />
+              Balles surprises chez les participants
+            </label>
+            <button className="btn btn--primary btn--block" onClick={rush} disabled={rushing} title="B">
+              {rushing ? 'Rush en cours…' : '🚀 Lâcher toutes les balles (10 s)'}
+            </button>
+            <button className="btn btn--block" onClick={() => void updateGame({ board: !game.board })}>
+              {game.board ? 'Masquer le classement' : '🏆 Afficher le classement'}
+            </button>
+            {ranking.length > 0 && (
+              <ol className="mini-board">
+                {ranking.slice(0, 3).map((p) => (
+                  <li key={p.player_id}>
+                    <span>{p.name || 'Anonyme'}</span>
+                    <strong>{p.tokens} 🪙</strong>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <button className="btn btn--small" onClick={resetTokens}>Remettre les jetons à zéro</button>
+          </section>
+
+          <section className="panel__section">
             <h2>Restitution</h2>
             <div className="panel__row">
               <button className="btn btn--small" onClick={() => downloadMarkdown(data)}>Télécharger (.md)</button>
@@ -423,6 +473,8 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
         ) : (
           <Stage data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
         )}
+        <BallLayer rushAt={game.rushAt} surprise={false} interactive={false} />
+        {game.board && <Leaderboard players={data.players} onClose={() => void updateGame({ board: false })} />}
         {showQr && (
           <div className="qr-overlay" onClick={() => setShowQr(false)}>
             <JoinInfo code={session.code} size={340} />

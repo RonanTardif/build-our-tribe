@@ -44,6 +44,17 @@ n'importe quel post-it, et retirer une proposition hors sujet.
 
 L'IA (Claude) a besoin d'une clé API Anthropic saisie dans le panneau animateur : elle reste dans le navigateur de l'animateur.
 
+## Jeu des balles 🍺
+
+Les têtes de la tribu ([`src/assets/faces/`](src/assets/faces/), toute image déposée là devient une balle) surgissent
+au hasard sur l'écran des participants (en moyenne une fois toutes les 2 à 3 minutes, parfois plusieurs à la fois)
+et rebondissent une dizaine de secondes : un clic dessus rapporte **3 jetons**. L'animateur peut lancer un **rush**
+(bouton ou touche <kbd>B</kbd>) : toutes les balles, très vite, pendant 10 secondes, **1 jeton** par balle attrapée.
+Le classement s'affiche sur l'écran projeté ; le premier gagne une bière.
+
+Au premier jeton, chacun donne un prénom pour le classement. L'identité de jeu est distincte de celle des post-its :
+le classement nominatif ne permet pas de retrouver qui a écrit quoi.
+
 ## Stack
 
 - Vite + React + TypeScript, build statique servi par **GitLab Pages** (`.gitlab-ci.yml`).

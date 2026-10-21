@@ -2,6 +2,20 @@ import type { Step } from './workshop'
 
 export type Phase = 'open' | 'revealed'
 
+// Jeu des balles, piloté par l'animateur.
+export type GameState = {
+  balls?: boolean // balles surprises chez les participants (activées par défaut)
+  rushAt?: string | null // lancement du dernier rush « on demand »
+  board?: boolean // classement affiché
+  resetAt?: string | null // dernière remise à zéro des jetons
+}
+
+export type Player = {
+  player_id: string
+  name: string | null
+  tokens: number
+}
+
 export type Session = {
   id: string
   code: string
@@ -12,6 +26,7 @@ export type Session = {
   timer_end: string | null
   manifesto: string | null
   steps: Step[] | null
+  game: GameState
   created_at: string
 }
 
@@ -59,4 +74,5 @@ export type SessionData = {
   themes: Theme[]
   choices: ChoiceRow[]
   votes: VoteRow[]
+  players: Player[]
 }

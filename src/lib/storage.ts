@@ -47,6 +47,19 @@ export function participantId(): string {
   return memoryParticipantId
 }
 
+// Identité de jeu, volontairement distincte de participantId : le classement nominatif
+// ne doit pas permettre de relier un prénom à des post-its.
+export function playerId(): string {
+  const stored = read('bot:player-id')
+  if (stored) return stored
+  const id = uuid()
+  write('bot:player-id', id)
+  return id
+}
+
+export const playerName = () => read('bot:player-name') ?? ''
+export const setPlayerName = (name: string) => write('bot:player-name', name)
+
 export type HostedSession = { code: string; key: string; createdAt: string }
 
 export function hostedSessions(): HostedSession[] {
