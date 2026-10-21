@@ -80,7 +80,7 @@ function PostitView({ step, data, pid, refresh }: StepProps<PostitStep>) {
     return (
       <>
         <p className="notice">Les post-its sont retournés. À vous la parole.</p>
-        <PostitWall contributions={all} themes={data.themes.filter((t) => t.step_id === step.id)} />
+        <PostitWall contributions={all} themes={data.themes.filter((t) => t.step_id === step.id)} selfId={pid} />
       </>
     )
   }

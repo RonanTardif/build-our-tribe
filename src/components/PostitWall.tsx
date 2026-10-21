@@ -15,18 +15,22 @@ type Props = {
   contributions: Contribution[]
   themes: Theme[]
   editor?: ThemeEditor
+  // Côté participant : met en évidence ses propres post-its (seule la personne concernée les voit).
+  selfId?: string
 }
 
-export function PostitWall({ contributions, themes, editor }: Props) {
+export function PostitWall({ contributions, themes, editor, selfId }: Props) {
   const themeIds = new Set(themes.map((t) => t.id))
   const loose = contributions.filter((c) => !c.theme_id || !themeIds.has(c.theme_id))
 
   if (!contributions.length && !themes.length) return <p className="empty">Aucun post-it pour cette étape.</p>
 
+  const order = new Map(contributions.map((c, i) => [c.id, i]))
   const postit = (c: Contribution) => (
     <div
       key={c.id}
-      className={`postit ${editor ? 'postit--editable' : ''}`}
+      className={`postit ${editor ? 'postit--editable' : ''} ${c.participant_id === selfId ? 'postit--self' : ''}`}
+      style={{ '--i': order.get(c.id) } as CSSProperties}
       onClick={editor ? () => editor.onPostitClick(c) : undefined}
     >
       {c.text}

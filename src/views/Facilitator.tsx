@@ -17,6 +17,7 @@ import { participantUrl, screenUrl } from '../lib/routes'
 import { useSession } from '../lib/useSession'
 import type { SessionData } from '../types'
 import type { ThemeEditor } from '../components/PostitWall'
+import { JoinInfo } from '../components/JoinInfo'
 import { Stage } from '../components/Stage'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
@@ -24,12 +25,6 @@ import { Brand } from '../components/OctoMark'
 export function Facilitator({ code, accessKey }: { code: string; accessKey: string }) {
   const { state, refresh } = useSession(code)
   const [presenting, setPresenting] = useState(false)
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPresenting(false)
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   if (state.status !== 'ready') return <Status state={state} code={code} />
   if (state.data.session.facilitator_key !== accessKey) {
@@ -61,6 +56,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
   const [manifestoDraft, setManifestoDraft] = useState<string | null>(null)
   const [editingManifesto, setEditingManifesto] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showQr, setShowQr] = useState(false)
 
   const run = async (label: string, action: () => Promise<unknown>) => {
     setBusy(label)
@@ -79,6 +75,46 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
     setActiveThemeId(null)
     void run('step', () => goToStep(session.id, index, STEPS[index]?.minutes ?? null))
   }
+
+  const togglePhase = () => void run('phase', () => setPhase(session.id, session.phase === 'open' ? 'revealed' : 'open'))
+
+  // Raccourcis : flèches et PageUp/PageDown (les clickers de présentation envoient ces touches).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return
+      switch (e.key) {
+        case 'ArrowRight':
+        case 'PageDown':
+          if (session.step_index < STEPS.length - 1) go(session.step_index + 1)
+          break
+        case 'ArrowLeft':
+        case 'PageUp':
+          if (session.step_index >= 0) go(session.step_index - 1)
+          break
+        case 'r':
+        case 'R':
+          if (step && step.kind !== 'manifesto') togglePhase()
+          break
+        case 'p':
+        case 'P':
+          setPresenting(!presenting)
+          break
+        case 'q':
+        case 'Q':
+          setShowQr((v) => !v)
+          break
+        case 'Escape':
+          setShowQr(false)
+          setPresenting(false)
+          break
+        default:
+          return
+      }
+      e.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   const addMinutes = (minutes: number) => {
     const from = Math.max(Date.now(), session.timer_end ? new Date(session.timer_end).getTime() : 0)
@@ -177,7 +213,11 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
               <button className="btn btn--small" onClick={copyLink}>{copied ? 'Lien copié ✓' : 'Copier le lien participant'}</button>
               <a className="btn btn--small" href={screenUrl(session.code)} target="_blank" rel="noreferrer">Écran de projection ↗</a>
               <button className="btn btn--small" onClick={() => setPresenting(true)}>Mode présentation</button>
+              <button className="btn btn--small" onClick={() => setShowQr(true)}>QR code</button>
             </div>
+            <p className="shortcuts">
+              <kbd>←</kbd> <kbd>→</kbd> étapes · <kbd>R</kbd> révéler · <kbd>P</kbd> présentation · <kbd>Q</kbd> QR code
+            </p>
           </section>
 
           <section className="panel__section">
@@ -210,10 +250,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
             <section className="panel__section">
               <h2>Étape en cours</h2>
               {step.kind !== 'manifesto' && (
-                <button
-                  className="btn btn--primary btn--block"
-                  onClick={() => void run('phase', () => setPhase(session.id, session.phase === 'open' ? 'revealed' : 'open'))}
-                >
+                <button className="btn btn--primary btn--block" onClick={togglePhase} title="R">
                   {session.phase === 'open'
                     ? step.kind === 'postit'
                       ? 'Révéler les post-its'
@@ -292,6 +329,11 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
 
       <main className="anim__stage theme-dark">
         <Stage data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
+        {showQr && (
+          <div className="qr-overlay" onClick={() => setShowQr(false)}>
+            <JoinInfo code={session.code} size={340} />
+          </div>
+        )}
         {presenting && (
           <button className="present-exit" onClick={() => setPresenting(false)} title="Échap">
             Afficher le panneau

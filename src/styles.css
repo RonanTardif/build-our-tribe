@@ -277,3 +277,23 @@ textarea { resize: vertical; }
 
 .card p { margin: 0; }
 .home__title + .eyebrow { margin-top: 0.8em; }
+
+/* Animation fluide */
+.shortcuts { margin: 0; font-size: 0.8rem; color: var(--muted); }
+kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; background: var(--bg); }
+.qr-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgb(14 35 86 / 0.85); backdrop-filter: blur(4px); cursor: zoom-out; animation: fade-in 0.2s ease both; }
+.qr-overlay .join { font-size: 1.3em; }
+.postit--self { outline: 2.5px solid var(--octo-turquoise); outline-offset: 2px; position: relative; }
+.postit--self::after { content: 'toi'; position: absolute; top: -9px; right: 8px; font-size: 0.7rem; font-weight: 700; background: var(--octo-turquoise); color: var(--octo-navy); border-radius: 999px; padding: 0 0.5em; }
+
+@keyframes flip-in { from { opacity: 0; transform: perspective(700px) rotateX(-75deg) translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.4); } }
+@keyframes grow { from { transform: scaleX(0); } }
+@keyframes fade-in { from { opacity: 0; } }
+.wall .postit { animation: flip-in 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both; animation-delay: calc(min(var(--i, 0), 24) * 40ms); transform-origin: top center; }
+.card-back { animation: pop-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.bar__fill { transform-origin: left; animation: grow 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
