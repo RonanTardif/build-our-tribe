@@ -9,6 +9,7 @@ import { Bars } from '../components/Bars'
 import { Markdown } from '../components/Markdown'
 import { PostitWall } from '../components/PostitWall'
 import { StepHeader } from '../components/Stage'
+import { WordCloud } from '../components/WordCloud'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
 
@@ -112,6 +113,7 @@ function PostitView({ step, data, pid, refresh }: StepProps<PostitStep>) {
     return (
       <>
         <p className="notice">Les post-its sont retournés. À vous la parole.</p>
+        {step.cloud && <WordCloud texts={all.map((c) => c.text)} />}
         <PostitWall contributions={all} themes={data.themes.filter((t) => t.step_id === step.id)} selfId={pid} />
       </>
     )

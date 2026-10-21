@@ -6,6 +6,7 @@ import { JoinInfo } from './JoinInfo'
 import { Markdown } from './Markdown'
 import { PostitWall, type ThemeEditor } from './PostitWall'
 import { Timer } from './Timer'
+import { WordCloud } from './WordCloud'
 import { OctoMark } from './OctoMark'
 
 // Ce qui est projeté : utilisé par l'écran de projection et par la vue animateur.
@@ -80,7 +81,12 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
           />
         )
       }
-      return <PostitWall contributions={stepContribs} themes={themes.filter((t) => t.step_id === step.id)} editor={grouping} />
+      return (
+        <>
+          {step.cloud && <WordCloud texts={stepContribs.map((c) => c.text)} />}
+          <PostitWall contributions={stepContribs} themes={themes.filter((t) => t.step_id === step.id)} editor={grouping} />
+        </>
+      )
     }
 
     case 'choice': {

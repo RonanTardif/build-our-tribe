@@ -306,3 +306,13 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 .ready-action { margin-top: 8px; display: grid; gap: 6px; }
 .btn--done { background: var(--accent-soft); border-color: var(--octo-turquoise); color: var(--success); }
 .stage > .ready { justify-self: center; width: min(620px, 100%); }
+
+/* Nuage de mots */
+.cloud { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.15em 0.6em; padding: 1.5em 1em; line-height: 1.05; text-align: center; }
+.cloud__word { font-weight: 700; letter-spacing: -0.01em; animation: pop-in 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+.cloud__word--0 { color: var(--ink); }
+.cloud__word--1 { color: var(--octo-turquoise); }
+.cloud__word--2 { color: var(--muted); }
+.theme-light .cloud__word--1, .participant .cloud__word--1 { color: #00a3ab; }
+.group--loose { break-inside: auto; }
+.wall .postit { break-inside: avoid; }

@@ -12,7 +12,8 @@ type StepBase = {
   minutes: number
 }
 
-export type PostitStep = StepBase & { kind: 'postit' }
+// cloud : affiche un nuage de mots au-dessus du mur à la révélation.
+export type PostitStep = StepBase & { kind: 'postit'; cloud?: boolean }
 export type ChoiceStep = StepBase & { kind: 'choice'; options: Option[]; max: number }
 export type VoteStep = StepBase & { kind: 'vote'; sources: string[]; points: number }
 export type ManifestoStep = StepBase & { kind: 'manifesto' }
@@ -32,6 +33,7 @@ export const STEPS: Step[] = [
     question: "Qu'est-ce qui te donne vraiment envie de te lever le matin dans ton métier ?",
     hint: 'Un sujet, une techno, un moment de mission, une rencontre… Une idée par post-it.',
     minutes: 10,
+    cloud: true,
   },
   {
     id: 'why',
