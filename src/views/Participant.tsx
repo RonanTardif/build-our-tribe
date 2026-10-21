@@ -10,6 +10,7 @@ import { Markdown } from '../components/Markdown'
 import { PostitWall } from '../components/PostitWall'
 import { StepHeader } from '../components/Stage'
 import { Status } from '../components/Status'
+import { Brand } from '../components/OctoMark'
 
 type StepProps<S extends Step> = { step: S; data: SessionData; pid: string; refresh: () => void }
 
@@ -29,7 +30,7 @@ export function Participant({ code }: { code: string }) {
   return (
     <div className="participant">
       <header className="topbar">
-        <span className="brand">{WORKSHOP.name}</span>
+        <Brand size={24} />
         <span className="topbar__code">{code}</span>
       </header>
       <main className="participant__main">
@@ -41,9 +42,9 @@ export function Participant({ code }: { code: string }) {
         ) : (
           <div className="welcome">
             <p className="eyebrow">{WORKSHOP.tribe}</p>
-            <h1>Bienvenue 👋</h1>
-            <p>L'atelier va bientôt commencer. Garde cette page ouverte, elle suivra l'animateur.</p>
-            <p className="muted">Tes contributions sont anonymes.</p>
+            <h1>Salut 👋</h1>
+            <p>Installe-toi, on démarre dans un instant. Cette page suit l'animateur : pas besoin de rafraîchir.</p>
+            <p className="muted">Tout est anonyme. Écris ce que tu penses vraiment, pas ce qui ferait bien en comité.</p>
           </div>
         )}
       </main>
@@ -66,7 +67,7 @@ function ParticipantStep(props: StepProps<Step>) {
           <Markdown text={props.data.session.manifesto} />
         </div>
       ) : (
-        <p className="notice">L'animateur prépare la synthèse de vos contributions…</p>
+        <p className="notice">L'animateur fait chauffer la synthèse…</p>
       )
   }
 }
@@ -78,7 +79,7 @@ function PostitView({ step, data, pid, refresh }: StepProps<PostitStep>) {
   if (data.session.phase === 'revealed') {
     return (
       <>
-        <p className="notice">Les post-its sont révélés : on en discute ensemble.</p>
+        <p className="notice">Les post-its sont retournés. À vous la parole.</p>
         <PostitWall contributions={all} themes={data.themes.filter((t) => t.step_id === step.id)} />
       </>
     )
@@ -93,7 +94,7 @@ function PostitView({ step, data, pid, refresh }: StepProps<PostitStep>) {
         }}
       />
       <p className="muted">
-        {all.length} post-its déposés par le groupe · les réponses restent cachées jusqu'à la révélation.
+        {all.length} post-its sur le mur · face cachée jusqu'à la révélation.
       </p>
       {mine.length > 0 && (
         <div className="my-postits">
@@ -139,13 +140,13 @@ function PostitForm({ onSubmit }: { onSubmit: (text: string) => Promise<void> })
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder="Une idée par post-it… (Entrée pour ajouter, Maj+Entrée pour aller à la ligne)"
+        placeholder="Une idée par post-it… (Entrée pour coller, Maj+Entrée pour aller à la ligne)"
         maxLength={500}
         rows={3}
         autoFocus
       />
       <button className="btn btn--primary" disabled={busy || !text.trim()}>
-        Ajouter le post-it
+        Coller le post-it
       </button>
       {error && <p className="error">{error}</p>}
     </form>
@@ -232,7 +233,7 @@ function ChoiceView({ step, data, pid }: StepProps<ChoiceStep>) {
         })}
       </div>
       <p className="muted">
-        {selected.length} / {step.max} choix · enregistré automatiquement
+        {selected.length} / {step.max} choix · enregistré au fil de l'eau
       </p>
       {error && <p className="error">{error}</p>}
     </>
@@ -256,7 +257,7 @@ function VoteView({ step, data, pid }: StepProps<VoteStep>) {
     )
   }
 
-  if (!targets.length) return <p className="notice">Pas encore de sujets à voter : l'animateur prépare les thèmes.</p>
+  if (!targets.length) return <p className="notice">Rien à voter pour l'instant : l'animateur range les post-its.</p>
 
   const change = (id: string, delta: number) => {
     if (delta > 0 && left <= 0) return
@@ -269,7 +270,7 @@ function VoteView({ step, data, pid }: StepProps<VoteStep>) {
   return (
     <>
       <p className={`points-left ${left === 0 ? 'points-left--done' : ''}`}>
-        {left > 0 ? `Il te reste ${left} point${left > 1 ? 's' : ''}` : 'Tous tes points sont placés ✓'}
+        {left > 0 ? `Il te reste ${left} point${left > 1 ? 's' : ''}` : 'Tous tes points sont posés ✓'}
       </p>
       <ul className="vote-list">
         {targets.map((target) => {

@@ -79,7 +79,8 @@ Les initiatives les plus soutenues, formulées comme des engagements.
 ## Ce qui fait débat
 Les divergences et tensions : entre aspirations individuelles, convictions collectives et opportunités business, et les idées minoritaires mais fortes.
 
-Règles : appuie-toi uniquement sur les contributions ; reprends les mots des participants quand ils sont justes ; évite le jargon et les formules creuses ; donne du poids aux votes sans gommer les désaccords ; reste concis, le texte sera projeté sur un écran. Pas de titre de niveau 1, pas de préambule : commence directement par « ## Notre Why ».`
+Règles : appuie-toi uniquement sur les contributions ; reprends les mots des participants quand ils sont justes ; donne du poids aux votes sans gommer les désaccords ; reste concis, le texte sera projeté sur un écran.
+Ton OCTO : direct, concret, exigeant et un brin d'humour ; « nous » collectif ; zéro langue de bois, zéro formule de plaquette commerciale (« excellence », « synergies », « au cœur de »…). Pas de titre de niveau 1, pas de préambule : commence directement par « ## Notre Why ».`
 
 export async function writeManifesto(workshopExport: string, onText: (text: string) => void) {
   const stream = client().beta.messages.stream({

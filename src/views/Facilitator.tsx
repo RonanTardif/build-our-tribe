@@ -19,6 +19,7 @@ import type { SessionData } from '../types'
 import type { ThemeEditor } from '../components/PostitWall'
 import { Stage } from '../components/Stage'
 import { Status } from '../components/Status'
+import { Brand } from '../components/OctoMark'
 
 export function Facilitator({ code, accessKey }: { code: string; accessKey: string }) {
   const { state, refresh } = useSession(code)
@@ -168,9 +169,10 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
       {!presenting && (
         <aside className="panel">
           <section className="panel__section">
-            <p className="eyebrow">{WORKSHOP.name} · animation</p>
+            <Brand />
+            <p className="eyebrow">Animation · {WORKSHOP.tribe}</p>
             <div className="panel__code">{session.code}</div>
-            <p className="muted">{data.participants.length} participants connectés</p>
+            <p className="muted">{data.participants.length} Octos connectés</p>
             <div className="panel__row">
               <button className="btn btn--small" onClick={copyLink}>{copied ? 'Lien copié ✓' : 'Copier le lien participant'}</button>
               <a className="btn btn--small" href={screenUrl(session.code)} target="_blank" rel="noreferrer">Écran de projection ↗</a>
@@ -288,7 +290,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
         </aside>
       )}
 
-      <main className="anim__stage">
+      <main className="anim__stage theme-dark">
         <Stage data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
         {presenting && (
           <button className="present-exit" onClick={() => setPresenting(false)} title="Échap">

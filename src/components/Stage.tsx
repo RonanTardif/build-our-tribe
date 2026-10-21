@@ -6,6 +6,7 @@ import { JoinInfo } from './JoinInfo'
 import { Markdown } from './Markdown'
 import { PostitWall, type ThemeEditor } from './PostitWall'
 import { Timer } from './Timer'
+import { OctoMark } from './OctoMark'
 
 // Ce qui est projeté : utilisé par l'écran de projection et par la vue animateur.
 
@@ -22,11 +23,15 @@ export function Stage({ data, grouping, manifestoDraft }: Props) {
   if (!step) {
     return (
       <div className="stage stage--lobby">
+        <OctoMark size={56} />
+        <h1 className="lobby__title">
+          {WORKSHOP.name}
+          <span className="dot">.</span>
+        </h1>
         <p className="eyebrow">{WORKSHOP.tribe}</p>
-        <h1 className="lobby__title">{WORKSHOP.name}</h1>
         <JoinInfo code={session.code} size={260} />
         <p className="lobby__count">
-          {data.participants.length} {data.participants.length > 1 ? 'personnes connectées' : 'personne connectée'}
+          <strong>{data.participants.length}</strong> {data.participants.length > 1 ? 'Octos connectés' : 'Octo connecté'}
         </p>
       </div>
     )
@@ -137,7 +142,7 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
           <Markdown text={text} />
         </div>
       ) : (
-        <p className="empty">La synthèse sera générée à partir de toutes vos contributions.</p>
+        <p className="empty">La synthèse sortira de vos contributions, pas d'un template.</p>
       )
     }
   }
@@ -152,7 +157,7 @@ function HiddenWall({ count, caption }: { count: number; caption: string }) {
         ))}
       </div>
       <p className="waiting__count">{caption}</p>
-      <p className="muted">Les réponses restent cachées jusqu'à la révélation.</p>
+      <p className="muted">Face cachée jusqu'à la révélation : pas d'effet mouton.</p>
     </div>
   )
 }
