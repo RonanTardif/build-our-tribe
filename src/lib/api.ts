@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { uuid } from './storage'
+import { DEFAULT_STEPS, type Step } from '../workshop'
 import type { Phase, Session, Theme } from '../types'
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -18,7 +19,7 @@ export async function createSession(title: string): Promise<Session> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const { data, error } = await supabase
       .from('sessions')
-      .insert({ code: randomCode(), title, facilitator_key })
+      .insert({ code: randomCode(), title, facilitator_key, steps: DEFAULT_STEPS })
       .select()
       .single()
     if (!error) return data as Session
@@ -54,12 +55,16 @@ export function goToStep(sessionId: string, stepIndex: number, minutes: number |
 export const setPhase = (sessionId: string, phase: Phase) => updateSession(sessionId, { phase })
 export const setTimer = (sessionId: string, timer_end: string | null) => updateSession(sessionId, { timer_end })
 export const setManifesto = (sessionId: string, manifesto: string) => updateSession(sessionId, { manifesto })
+export const saveSteps = (sessionId: string, steps: Step[], step_index: number) => updateSession(sessionId, { steps, step_index })
 
-export async function addContribution(sessionId: string, stepId: string, participantId: string, text: string) {
-  const { error } = await supabase
+export async function addContribution(sessionId: string, stepId: string, participantId: string, text: string): Promise<string> {
+  const { data, error } = await supabase
     .from('contributions')
     .insert({ session_id: sessionId, step_id: stepId, participant_id: participantId, text })
+    .select('id')
+    .single()
   fail(error)
+  return (data as { id: string }).id
 }
 
 export async function updateContribution(id: string, text: string) {

@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { STEPS, WORKSHOP, type ChoiceStep, type PostitStep, type Step, type VoteStep } from '../workshop'
+import { WORKSHOP, sessionSteps, type ChoiceStep, type PostitStep, type Step, type VoteStep } from '../workshop'
 import { addContribution, deleteContribution, joinSession, saveChoice, saveVote, setReady, updateContribution } from '../lib/api'
-import { choiceResults, spentPoints, voteResults, voteTargets } from '../lib/results'
+import { choiceOptions, choiceResults, spentPoints, voteResults, voteTargets } from '../lib/results'
 import { participantId } from '../lib/storage'
 import { useSession } from '../lib/useSession'
 import type { Contribution, SessionData } from '../types'
 import { Bars } from '../components/Bars'
 import { Markdown } from '../components/Markdown'
 import { PostitWall } from '../components/PostitWall'
-import { StepHeader } from '../components/Stage'
+import { StepHeader, interactive } from '../components/Stage'
 import { WordCloud } from '../components/WordCloud'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
@@ -26,7 +26,8 @@ export function Participant({ code }: { code: string }) {
 
   if (state.status !== 'ready') return <Status state={state} code={code} />
   const { data } = state
-  const step = STEPS[data.session.step_index]
+  const steps = sessionSteps(data.session)
+  const step = steps[data.session.step_index]
 
   return (
     <div className="participant">
@@ -37,7 +38,7 @@ export function Participant({ code }: { code: string }) {
       <main className="participant__main">
         {step ? (
           <>
-            <StepHeader step={step} index={data.session.step_index} timerEnd={data.session.timer_end} hint />
+            <StepHeader step={step} index={data.session.step_index} total={steps.length} timerEnd={data.session.timer_end} hint />
             <ParticipantStep key={step.id} step={step} data={data} pid={pid} refresh={refresh} />
           </>
         ) : (
@@ -58,7 +59,7 @@ function ParticipantStep(props: StepProps<Step>) {
   return (
     <>
       <StepContent {...props} />
-      {data.session.phase === 'open' && step.kind !== 'manifesto' && <ReadyButton {...props} />}
+      {data.session.phase === 'open' && interactive(step) && <ReadyButton {...props} />}
     </>
   )
 }
@@ -94,6 +95,8 @@ function StepContent(props: StepProps<Step>) {
       return <ChoiceView {...props} step={step} />
     case 'vote':
       return <VoteView {...props} step={step} />
+    case 'info':
+      return null
     case 'manifesto':
       return props.data.session.manifesto ? (
         <div className="manifesto">
@@ -224,48 +227,78 @@ function MyPostit({ contribution, refresh }: { contribution: Contribution; refre
   )
 }
 
-function ChoiceView({ step, data, pid }: StepProps<ChoiceStep>) {
+function ChoiceView({ step, data, pid, refresh }: StepProps<ChoiceStep>) {
   const saved = data.choices.find((c) => c.step_id === step.id && c.participant_id === pid)
-  const [selected, setSelected] = useState<string[]>(saved?.option_ids ?? [])
+  const [picked, setPicked] = useState<string[]>(saved?.option_ids ?? [])
+  const [proposal, setProposal] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const options = choiceOptions(step, data.contributions)
+  // Une option supprimée par l'animateur ne doit plus compter dans le quota.
+  const selected = picked.filter((id) => options.some((o) => o.id === id))
 
   if (data.session.phase === 'revealed') {
-    const { items } = choiceResults(step, data.choices)
+    const { items } = choiceResults(step, data.choices, data.contributions)
     return (
       <Bars
         items={items.map(({ option, count }) => ({
           key: option.id,
           label: `${option.label}${selected.includes(option.id) ? ' ✓' : ''}`,
           value: count,
-          caption: option.description,
+          caption: option.custom ? 'Proposé en séance' : option.description,
         }))}
         unit={(n) => `${n} ${n > 1 ? 'votes' : 'vote'}`}
       />
     )
   }
 
-  const toggle = (id: string) => {
-    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
-    if (next.length > step.max) return
-    setSelected(next)
+  const save = (next: string[]) => {
+    setPicked(next)
     setError(null)
     saveChoice(data.session.id, step.id, pid, next).catch((e: Error) => setError(e.message))
+  }
+  const toggle = (id: string) => {
+    const next = selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]
+    if (next.length <= step.max) save(next)
+  }
+  const propose = async (e: FormEvent) => {
+    e.preventDefault()
+    const label = proposal.trim()
+    if (!label) return
+    const existing = options.find((o) => o.label.toLowerCase() === label.toLowerCase())
+    try {
+      const id = existing?.id ?? (await addContribution(data.session.id, step.id, pid, label))
+      setProposal('')
+      if (!selected.includes(id) && selected.length < step.max) save([...selected, id])
+      refresh()
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   return (
     <>
       <div className="options">
-        {step.options.map((option) => {
+        {options.map((option) => {
           const on = selected.includes(option.id)
           const blocked = !on && selected.length >= step.max
           return (
             <button key={option.id} className={`option ${on ? 'option--on' : ''}`} disabled={blocked} onClick={() => toggle(option.id)}>
               <span className="option__label">{option.label}</span>
-              {option.description && <span className="option__description">{option.description}</span>}
+              {option.custom ? (
+                <span className="option__tag">Proposé en séance</span>
+              ) : (
+                option.description && <span className="option__description">{option.description}</span>
+              )}
             </button>
           )
         })}
       </div>
+      {step.allowCustom && (
+        <form className="propose" onSubmit={propose}>
+          <input value={proposal} onChange={(e) => setProposal(e.target.value)} placeholder="Il en manque un ? Propose-le…" maxLength={120} />
+          <button className="btn" disabled={!proposal.trim()}>Proposer</button>
+        </form>
+      )}
       <p className="muted">
         {selected.length} / {step.max} choix · enregistré au fil de l'eau
       </p>

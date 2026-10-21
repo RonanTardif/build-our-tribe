@@ -1,3 +1,5 @@
+import type { Step } from './workshop'
+
 export type Phase = 'open' | 'revealed'
 
 export type Session = {
@@ -9,6 +11,7 @@ export type Session = {
   phase: Phase
   timer_end: string | null
   manifesto: string | null
+  steps: Step[] | null
   created_at: string
 }
 

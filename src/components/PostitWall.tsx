@@ -7,6 +7,8 @@ export type ThemeEditor = {
   onPostitClick: (contribution: Contribution) => void
   onRename: (theme: Theme) => void
   onDelete: (theme: Theme) => void
+  onEditPostit: (contribution: Contribution) => void
+  onDeletePostit: (contribution: Contribution) => void
 }
 
 const COLORS = ['#ffe58a', '#b9f0d8', '#c9dcff', '#ffd0e0', '#e4d4ff', '#ffd8b0', '#d6f5a8', '#c5f1f5']
@@ -34,6 +36,12 @@ export function PostitWall({ contributions, themes, editor, selfId }: Props) {
       onClick={editor ? () => editor.onPostitClick(c) : undefined}
     >
       {c.text}
+      {editor && (
+        <span className="postit__tools">
+          <button title="Modifier" onClick={(e) => (e.stopPropagation(), editor.onEditPostit(c))}>✎</button>
+          <button title="Supprimer" onClick={(e) => (e.stopPropagation(), editor.onDeletePostit(c))}>×</button>
+        </span>
+      )}
     </div>
   )
 

@@ -34,6 +34,9 @@ export function uuid(): string {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
 }
 
+// Auteur des post-its ajoutés par l'animateur (idées dites à l'oral) : exclu des compteurs.
+export const FACILITATOR_ID = '00000000-0000-4000-8000-00000000f00d'
+
 let memoryParticipantId: string | null = null
 
 export function participantId(): string {

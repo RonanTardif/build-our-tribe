@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react'
-import { PART_LABELS, STEPS, WORKSHOP } from '../workshop'
+import { WORKSHOP, sessionSteps, type Step } from '../workshop'
 import {
+  addContribution,
   assignTheme,
   createTheme,
+  deleteContribution,
   deleteTheme,
   goToStep,
   renameTheme,
   replaceThemes,
+  saveSteps,
   setManifesto,
   setPhase,
   setTimer,
+  updateContribution,
 } from '../lib/api'
 import { getApiKey, setApiKey } from '../lib/aiKey'
 import { downloadMarkdown, sessionMarkdown } from '../lib/exportMd'
 import { participantUrl, screenUrl } from '../lib/routes'
-import { readyCount } from '../lib/results'
+import { choiceOptions, readyCount } from '../lib/results'
+import { FACILITATOR_ID } from '../lib/storage'
 import { useSession } from '../lib/useSession'
 import type { SessionData } from '../types'
 import type { ThemeEditor } from '../components/PostitWall'
 import { JoinInfo } from '../components/JoinInfo'
-import { Stage } from '../components/Stage'
+import { Stage, interactive } from '../components/Stage'
+import { StepsEditor } from '../components/StepsEditor'
 import { Status } from '../components/Status'
 import { Brand } from '../components/OctoMark'
 
@@ -49,7 +55,10 @@ type ConsoleProps = {
 
 function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
   const { session } = data
-  const step = STEPS[session.step_index]
+  const steps = sessionSteps(session)
+  const step = steps[session.step_index]
+  const [editing, setEditing] = useState(false)
+  const [newPostit, setNewPostit] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeThemeId, setActiveThemeId] = useState<string | null>(null)
@@ -74,7 +83,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
 
   const go = (index: number) => {
     setActiveThemeId(null)
-    void run('step', () => goToStep(session.id, index, STEPS[index]?.minutes ?? null))
+    void run('step', () => goToStep(session.id, index, steps[index]?.minutes ?? null))
   }
 
   const togglePhase = () => void run('phase', () => setPhase(session.id, session.phase === 'open' ? 'revealed' : 'open'))
@@ -83,10 +92,11 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return
+      if (editing) return
       switch (e.key) {
         case 'ArrowRight':
         case 'PageDown':
-          if (session.step_index < STEPS.length - 1) go(session.step_index + 1)
+          if (session.step_index < steps.length - 1) go(session.step_index + 1)
           break
         case 'ArrowLeft':
         case 'PageUp':
@@ -94,7 +104,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           break
         case 'r':
         case 'R':
-          if (step && step.kind !== 'manifesto') togglePhase()
+          if (step && interactive(step)) togglePhase()
           break
         case 'p':
         case 'P':
@@ -128,6 +138,21 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
     window.setTimeout(() => setCopied(false), 1500)
   }
 
+  // Le déroulé enregistré garde l'étape en cours, même si elle a été déplacée.
+  const saveDraft = async (draft: Step[]) => {
+    let index = step ? draft.findIndex((s) => s.id === step.id) : session.step_index
+    if (index < 0) index = Math.min(session.step_index, draft.length - 1)
+    await saveSteps(session.id, draft, index)
+    refresh()
+  }
+
+  const addFacilitatorContribution = () => {
+    const text = newPostit.trim()
+    if (!text || !step) return
+    setNewPostit('')
+    void run('postit', () => addContribution(session.id, step.id, FACILITATOR_ID, text))
+  }
+
   const stepContribs = step ? data.contributions.filter((c) => c.step_id === step.id) : []
   const stepThemes = step ? data.themes.filter((t) => t.step_id === step.id) : []
 
@@ -151,6 +176,13 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
             if (window.confirm(`Supprimer « ${theme.label} » ? Ses post-its redeviennent non classés.`)) {
               void run('delete', () => deleteTheme(theme.id))
             }
+          },
+          onEditPostit: (c) => {
+            const text = window.prompt('Modifier le post-it', c.text)?.trim()
+            if (text && text !== c.text) void run('edit', () => updateContribution(c.id, text))
+          },
+          onDeletePostit: (c) => {
+            if (window.confirm(`Supprimer ce post-it ?\n\n« ${c.text} »`)) void run('delete', () => deleteContribution(c.id))
           },
         }
       : undefined
@@ -222,26 +254,31 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           </section>
 
           <section className="panel__section">
-            <h2>Déroulé</h2>
+            <div className="panel__title">
+              <h2>Déroulé</h2>
+              <button className="btn btn--small" onClick={() => setEditing(!editing)}>
+                {editing ? 'Fermer l’éditeur' : '✎ Modifier'}
+              </button>
+            </div>
             <ol className="steps">
               <li>
                 <button className={`steps__item ${session.step_index < 0 ? 'steps__item--current' : ''}`} onClick={() => go(-1)}>
                   Accueil · QR code
                 </button>
               </li>
-              {STEPS.map((s, i) => (
+              {steps.map((s, i) => (
                 <li key={s.id}>
-                  {(i === 0 || STEPS[i - 1].part !== s.part) && <div className="steps__part">{PART_LABELS[s.part]}</div>}
+                  {s.part && (i === 0 || steps[i - 1].part !== s.part) && <div className="steps__part">{s.part}</div>}
                   <button className={`steps__item ${i === session.step_index ? 'steps__item--current' : ''}`} onClick={() => go(i)}>
                     <span>{s.title}</span>
-                    <span className="muted">{s.minutes}′</span>
+                    <span className="muted">{s.minutes ? `${s.minutes}′` : ''}</span>
                   </button>
                 </li>
               ))}
             </ol>
             <div className="panel__row">
               <button className="btn" disabled={session.step_index < 0} onClick={() => go(session.step_index - 1)}>← Précédent</button>
-              <button className="btn btn--primary" disabled={session.step_index >= STEPS.length - 1} onClick={() => go(session.step_index + 1)}>
+              <button className="btn btn--primary" disabled={session.step_index >= steps.length - 1} onClick={() => go(session.step_index + 1)}>
                 {session.step_index < 0 ? "Démarrer l'atelier →" : 'Suivant →'}
               </button>
             </div>
@@ -250,12 +287,12 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           {step && (
             <section className="panel__section">
               <h2>Étape en cours</h2>
-              {step.kind !== 'manifesto' && session.phase === 'open' && (
+              {interactive(step) && session.phase === 'open' && (
                 <p className="muted">
                   <strong>{readyCount(step.id, data.participants)}</strong> / {data.participants.length} ont fini
                 </p>
               )}
-              {step.kind !== 'manifesto' && (
+              {interactive(step) && (
                 <button className="btn btn--primary btn--block" onClick={togglePhase} title="R">
                   {session.phase === 'open'
                     ? step.kind === 'postit'
@@ -270,10 +307,57 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
                 <span className="muted">Chrono</span>
                 <button className="btn btn--small" onClick={() => addMinutes(1)}>+1 min</button>
                 <button className="btn btn--small" onClick={() => go(session.step_index)} title="Relance l'étape (repasse en écriture)">
-                  Relancer {step.minutes}′
+                  Relancer{step.minutes ? ` ${step.minutes}′` : ''}
                 </button>
                 <button className="btn btn--small" onClick={() => void run('timer', () => setTimer(session.id, null))}>Stop</button>
               </div>
+
+              {step.kind === 'postit' && (
+                <div className="panel__block">
+                  <h3>Ajouter un post-it</h3>
+                  <p className="muted">Pour une idée dite à l'oral ou un oubli. Il n'est compté pour personne.</p>
+                  <div className="panel__row">
+                    <input
+                      value={newPostit}
+                      onChange={(e) => setNewPostit(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addFacilitatorContribution()}
+                      placeholder="Texte du post-it…"
+                    />
+                    <button className="btn btn--small" onClick={addFacilitatorContribution} disabled={!newPostit.trim()}>Coller</button>
+                  </div>
+                </div>
+              )}
+
+              {step.kind === 'choice' && (
+                <div className="panel__block">
+                  <h3>Options proposées en séance</h3>
+                  <div className="panel__row">
+                    <input
+                      value={newPostit}
+                      onChange={(e) => setNewPostit(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addFacilitatorContribution()}
+                      placeholder="Ajouter une option…"
+                    />
+                    <button className="btn btn--small" onClick={addFacilitatorContribution} disabled={!newPostit.trim()}>Ajouter</button>
+                  </div>
+                  <ul className="moderation">
+                    {choiceOptions(step, data.contributions)
+                      .filter((o) => o.custom)
+                      .map((o) => (
+                        <li key={o.id}>
+                          <span>{o.label}</span>
+                          <button
+                            className="btn btn--small"
+                            title="Supprimer"
+                            onClick={() => window.confirm(`Supprimer « ${o.label} » ?`) && void run('delete', () => deleteContribution(o.id))}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
 
               {grouping && (
                 <div className="panel__block">
@@ -334,7 +418,11 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
       )}
 
       <main className="anim__stage theme-dark">
-        <Stage data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
+        {editing ? (
+          <StepsEditor steps={steps} currentId={step?.id ?? null} onSave={saveDraft} onClose={() => setEditing(false)} />
+        ) : (
+          <Stage data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
+        )}
         {showQr && (
           <div className="qr-overlay" onClick={() => setShowQr(false)}>
             <JoinInfo code={session.code} size={340} />

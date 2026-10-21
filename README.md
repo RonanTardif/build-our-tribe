@@ -22,8 +22,14 @@ chacun contribue anonymement depuis son PC, l'animateur pilote les étapes et pr
 | Décider | Nos premières actions | vote 3 points | 5′ |
 | Décider | Notre Why provisoire | synthèse IA projetée | 10′ |
 
-Questions, durées et options se modifient dans [`src/workshop.ts`](src/workshop.ts).
-Ne change pas l'`id` d'une étape une fois des contributions saisies.
+Ce déroulé n'est qu'un point de départ ([`src/workshop.ts`](src/workshop.ts)) : il est copié dans chaque session,
+puis l'animateur le modifie librement avec **✎ Modifier** (même en pleine séance) : questions, consignes, durées, parties,
+ordre des étapes, options, points de vote, ajout ou suppression d'étapes. Types d'étapes : post-its, choix, vote à points,
+message (slide libre : pause, consigne…) et synthèse IA.
+
+Pas de cases imposées : sur une étape de choix, les participants peuvent proposer leurs propres options (territoires…),
+aussitôt choisissables par tous ; l'animateur peut ajouter des post-its (idées dites à l'oral), corriger ou supprimer
+n'importe quel post-it, et retirer une proposition hors sujet.
 
 ## Animer
 
@@ -52,7 +58,8 @@ cp .env.example .env.local   # URL + publishable key Supabase
 npm run dev
 ```
 
-Base de données : exécute [`supabase/schema.sql`](supabase/schema.sql) une fois dans le SQL Editor du projet Supabase.
+Base de données : exécute [`supabase/schema.sql`](supabase/schema.sql) une fois dans le SQL Editor du projet Supabase
+(sur une base existante, applique plutôt les fichiers de [`supabase/migrations/`](supabase/migrations/)).
 
 Déploiement : chaque push sur `main` publie sur GitLab Pages. Les variables `VITE_SUPABASE_*` viennent de
 `.env.production` (ou des variables CI/CD du projet, prioritaires). Pour que les participants accèdent à la page

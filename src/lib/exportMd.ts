@@ -1,4 +1,4 @@
-import { PART_LABELS, STEPS, WORKSHOP } from '../workshop'
+import { WORKSHOP, sessionSteps } from '../workshop'
 import { choiceResults, voteResults, voteTargets } from './results'
 import type { SessionData } from '../types'
 
@@ -15,11 +15,11 @@ export function sessionMarkdown(data: SessionData, { includeManifesto = true } =
   ]
 
   let part = ''
-  for (const step of STEPS) {
-    if (step.kind === 'manifesto' && !includeManifesto) continue
+  for (const step of sessionSteps(session)) {
+    if (step.kind === 'info' || (step.kind === 'manifesto' && !includeManifesto)) continue
     if (step.part !== part) {
       part = step.part
-      lines.push(`## ${PART_LABELS[step.part]}`, '')
+      if (part) lines.push(`## ${part}`, '')
     }
     lines.push(`### ${step.title}`, '', `> ${step.question}`, '')
 
@@ -43,8 +43,13 @@ export function sessionMarkdown(data: SessionData, { includeManifesto = true } =
         break
       }
       case 'choice': {
-        const { respondents, items } = choiceResults(step, choices)
-        lines.push(`${respondents} répondants`, '', ...items.map(({ option, count }) => `- ${option.label} : ${count}`), '')
+        const { respondents, items } = choiceResults(step, choices, contributions)
+        lines.push(
+          `${respondents} répondants`,
+          '',
+          ...items.map(({ option, count }) => `- ${oneLine(option.label)}${option.custom ? ' (proposé en séance)' : ''} : ${count}`),
+          '',
+        )
         break
       }
       case 'vote': {

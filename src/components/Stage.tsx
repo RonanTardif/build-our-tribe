@@ -1,5 +1,5 @@
-import { PART_LABELS, STEPS, WORKSHOP, type Step } from '../workshop'
-import { choiceResults, contributorsCount, readyCount, voteResults, voteTargets } from '../lib/results'
+import { WORKSHOP, sessionSteps, type Step } from '../workshop'
+import { choiceOptions, choiceResults, contributorsCount, readyCount, voteResults, voteTargets } from '../lib/results'
 import type { SessionData } from '../types'
 import { Bars } from './Bars'
 import { JoinInfo } from './JoinInfo'
@@ -19,7 +19,8 @@ type Props = {
 
 export function Stage({ data, grouping, manifestoDraft }: Props) {
   const { session } = data
-  const step = STEPS[session.step_index]
+  const steps = sessionSteps(session)
+  const step = steps[session.step_index]
 
   if (!step) {
     return (
@@ -40,27 +41,32 @@ export function Stage({ data, grouping, manifestoDraft }: Props) {
 
   return (
     <div className="stage">
-      <StepHeader step={step} index={session.step_index} timerEnd={session.timer_end} />
+      <StepHeader step={step} index={session.step_index} total={steps.length} timerEnd={session.timer_end} hint={step.kind === 'info'} />
       <StageBody step={step} data={data} grouping={grouping} manifestoDraft={manifestoDraft} />
-      {session.phase === 'open' && step.kind !== 'manifesto' && (
+      {session.phase === 'open' && interactive(step) && (
         <ReadyMeter ready={readyCount(step.id, data.participants)} total={data.participants.length} />
       )}
     </div>
   )
 }
 
-export function StepHeader({ step, index, timerEnd, hint }: { step: Step; index: number; timerEnd: string | null; hint?: boolean }) {
+// Étapes où les participants répondent (et peuvent dire « j'ai fini »).
+export const interactive = (step: Step) => step.kind === 'postit' || step.kind === 'choice' || step.kind === 'vote'
+
+type StepHeaderProps = { step: Step; index: number; total: number; timerEnd: string | null; hint?: boolean }
+
+export function StepHeader({ step, index, total, timerEnd, hint }: StepHeaderProps) {
   return (
-    <header className="step-head">
+    <header className={`step-head ${step.kind === 'info' ? 'step-head--info' : ''}`}>
       <div className="step-head__meta">
-        <span className="pill">{PART_LABELS[step.part]}</span>
+        {step.part && <span className="pill">{step.part}</span>}
         <span>
-          Étape {index + 1} / {STEPS.length} · {step.title}
+          Étape {index + 1} / {total} · {step.title}
         </span>
         <Timer end={timerEnd} />
       </div>
       <h1 className="step-head__question">{step.question}</h1>
-      {hint && step.hint && <p className="step-head__hint">{step.hint}</p>}
+      {hint && step.hint && (step.kind === 'info' ? <Markdown text={step.hint} /> : <p className="step-head__hint">{step.hint}</p>)}
     </header>
   )
 }
@@ -90,7 +96,7 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
     }
 
     case 'choice': {
-      const { respondents, items } = choiceResults(step, choices)
+      const { respondents, items } = choiceResults(step, choices, contributions)
       if (!revealed) {
         return (
           <div className="waiting">
@@ -98,8 +104,10 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
               {respondents} / {people} ont répondu
             </p>
             <ul className="chips">
-              {step.options.map((o) => (
-                <li key={o.id}>{o.label}</li>
+              {choiceOptions(step, contributions).map((o) => (
+                <li key={o.id} className={o.custom ? 'chip--custom' : ''}>
+                  {o.label}
+                </li>
               ))}
             </ul>
           </div>
@@ -107,7 +115,12 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
       }
       return (
         <Bars
-          items={items.map(({ option, count }) => ({ key: option.id, label: option.label, value: count, caption: option.description }))}
+          items={items.map(({ option, count }) => ({
+            key: option.id,
+            label: option.label,
+            value: count,
+            caption: option.custom ? 'Proposé en séance' : option.description,
+          }))}
           unit={(n) => `${n} ${n > 1 ? 'votes' : 'vote'}`}
         />
       )
@@ -143,6 +156,9 @@ function StageBody({ step, data, grouping, manifestoDraft }: { step: Step } & Pr
         />
       )
     }
+
+    case 'info':
+      return null
 
     case 'manifesto': {
       const text = manifestoDraft ?? session.manifesto

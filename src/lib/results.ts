@@ -1,17 +1,28 @@
-import type { ChoiceStep, VoteStep } from '../workshop'
+import type { ChoiceStep, Option, VoteStep } from '../workshop'
+import { FACILITATOR_ID } from './storage'
 import type { ChoiceRow, Contribution, Participant, Theme, VoteRow } from '../types'
 
 export function contributorsCount(stepId: string, contributions: Contribution[]) {
-  return new Set(contributions.filter((c) => c.step_id === stepId).map((c) => c.participant_id)).size
+  return new Set(contributions.filter((c) => c.step_id === stepId && c.participant_id !== FACILITATOR_ID).map((c) => c.participant_id)).size
 }
 
 export function readyCount(stepId: string, participants: Participant[]) {
   return participants.filter((p) => p.ready_step === stepId).length
 }
 
-export function choiceResults(step: ChoiceStep, choices: ChoiceRow[]) {
+export type ChoiceOption = Option & { custom: boolean }
+
+// Options prévues + options proposées en séance (stockées comme contributions de l'étape).
+export function choiceOptions(step: ChoiceStep, contributions: Contribution[]): ChoiceOption[] {
+  return [
+    ...step.options.map((o) => ({ ...o, custom: false })),
+    ...contributions.filter((c) => c.step_id === step.id).map((c) => ({ id: c.id, label: c.text, custom: true })),
+  ]
+}
+
+export function choiceResults(step: ChoiceStep, choices: ChoiceRow[], contributions: Contribution[]) {
   const rows = choices.filter((c) => c.step_id === step.id && c.option_ids.length > 0)
-  const items = step.options
+  const items = choiceOptions(step, contributions)
     .map((option) => ({ option, count: rows.filter((r) => r.option_ids.includes(option.id)).length }))
     .sort((a, b) => b.count - a.count)
   return { respondents: rows.length, items }

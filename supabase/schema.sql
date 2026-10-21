@@ -10,6 +10,7 @@ create table public.sessions (
   phase text not null default 'open' check (phase in ('open', 'revealed')),
   timer_end timestamptz,
   manifesto text,
+  steps jsonb,
   created_at timestamptz not null default now()
 );
 
