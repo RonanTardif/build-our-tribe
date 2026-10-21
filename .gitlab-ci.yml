@@ -1,0 +1,15 @@
+# Build Vite statique publié sur GitLab Pages à chaque push sur la branche par défaut.
+# VITE_SUPABASE_URL et VITE_SUPABASE_KEY viennent de .env.production (clé publique)
+# ou des variables CI/CD du projet, qui sont prioritaires.
+
+pages:
+  image: node:22
+  stage: deploy
+  script:
+    - npm ci --no-audit --no-fund
+    - npm run build
+    - rm -rf public && mv dist public
+  artifacts:
+    paths: [public]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
