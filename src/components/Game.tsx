@@ -61,7 +61,7 @@ function surpriseBall(): Ball {
 // Balle de rush : pas de gravité, très rapide, part dans une direction au hasard.
 function rushBall(face: string, ttl: number): Ball {
   const size = rand(64, 84)
-  const speed = rand(850, 1300)
+  const speed = rand(450, 700)
   const direction = rand(0, Math.PI * 2)
   return {
     id: nextId++,
