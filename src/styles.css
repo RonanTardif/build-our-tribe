@@ -402,3 +402,6 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 .btn--rush { background: var(--octo-red); border-color: var(--octo-red); color: #ffffff; }
 .btn--rush:hover:not(:disabled) { filter: brightness(1.1); border-color: var(--octo-red); }
 .version { margin: 0; font-size: 0.75rem; color: var(--muted); }
+.balls { transition: background-color 0.3s; }
+.balls--blocking { pointer-events: auto; background-color: rgb(14 35 86 / 0.08); cursor: crosshair; }
+.hud { z-index: 55; }

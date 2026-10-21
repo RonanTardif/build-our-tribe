@@ -207,8 +207,15 @@ export function BallLayer({ rushAt, surprise, interactive, onCatch }: LayerProps
     }, 700)
   }
 
+  // Tant que des balles sont en jeu, le voile capte les clics : on ne déclenche rien par erreur
+  // dans la page. preventDefault sur mousedown garde le focus (on peut reprendre la frappe).
+  const blocking = interactive && (balls.current.length > 0 || rushEnd !== null)
+
   return (
-    <div className={`balls ${interactive ? '' : 'balls--passive'}`}>
+    <div
+      className={`balls ${interactive ? '' : 'balls--passive'} ${blocking ? 'balls--blocking' : ''}`}
+      onMouseDown={blocking ? (e) => e.preventDefault() : undefined}
+    >
       {rushEnd && <RushBanner end={rushEnd} />}
       {balls.current.map((b) => (
         <button
