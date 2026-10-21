@@ -371,9 +371,10 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 .balls--passive .ball { pointer-events: none; }
 .ball img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; pointer-events: none; animation: ball-in 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both; user-select: none; }
 .ball--leaving { opacity: 0; }
-.ball--caught img { animation: ball-pop 0.35s ease-out forwards; }
+/* `scale` (et non `transform`) : la position de la balle est déjà dans son transform. */
+.ball--caught { pointer-events: none; animation: ball-caught 0.35s ease-out forwards; }
+@keyframes ball-caught { to { scale: 1.6; opacity: 0; } }
 @keyframes ball-in { from { transform: scale(0); } }
-@keyframes ball-pop { to { transform: scale(1.6); opacity: 0; } }
 .floater { position: absolute; transform: translate(-50%, -100%); font-weight: 800; font-size: 1.6rem; color: var(--octo-turquoise); text-shadow: 0 2px 8px rgb(14 35 86 / 0.6); animation: float-up 0.7s ease-out forwards; pointer-events: none; }
 @keyframes float-up { to { transform: translate(-50%, -220%); opacity: 0; } }
 .rush-banner { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); background: var(--octo-red); color: #ffffff; font-weight: 800; font-size: 1.3rem; letter-spacing: 0.05em; padding: 0.35em 1.1em; border-radius: 999px; box-shadow: 0 6px 20px rgb(230 0 0 / 0.35); animation: pop-in 0.3s both; }
@@ -405,3 +406,14 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 .balls { transition: background-color 0.3s; }
 .balls--blocking { pointer-events: auto; background-color: rgb(14 35 86 / 0.08); cursor: crosshair; }
 .hud { z-index: 55; }
+
+/* Animation de tir */
+.shot { position: absolute; width: 0; height: 0; pointer-events: none; z-index: 2; }
+.shot__flash { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle, #ffffff 0 25%, #ffd166 45%, rgb(230 0 0 / 0.6) 60%, transparent 72%); animation: shot-flash 0.2s ease-out forwards; }
+.shot__ring { position: absolute; left: -24px; top: -24px; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--octo-turquoise); animation: shot-ring 0.5s ease-out forwards; }
+.shot--miss .shot__ring { left: -16px; top: -16px; width: 32px; height: 32px; border: 2px dashed rgb(14 35 86 / 0.45); animation-duration: 0.4s; }
+.shot__spark { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--octo-turquoise); transform: rotate(var(--a)) translateX(6px); animation: shot-spark 0.5s ease-out forwards; }
+.shot__spark:nth-child(even) { background: var(--octo-red); }
+@keyframes shot-flash { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+@keyframes shot-ring { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+@keyframes shot-spark { to { transform: rotate(var(--a)) translateX(56px) scale(0.3); opacity: 0; } }

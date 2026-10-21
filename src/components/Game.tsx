@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { savePlayer } from '../lib/api'
 import { playerId, playerName, setPlayerName } from '../lib/storage'
 import type { Player, SessionData } from '../types'
@@ -32,6 +32,9 @@ type Ball = {
 }
 
 type Floater = { id: number; x: number; y: number; text: string }
+type Shot = { id: number; x: number; y: number; hit: boolean }
+
+const SPARKS = Array.from({ length: 8 }, (_, i) => i * 45)
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min)
 const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
@@ -61,7 +64,7 @@ function surpriseBall(): Ball {
 // Balle de rush : pas de gravité, très rapide, part dans une direction au hasard.
 function rushBall(face: string, ttl: number): Ball {
   const size = rand(64, 84)
-  const speed = rand(450, 700)
+  const speed = rand(280, 440)
   const direction = rand(0, Math.PI * 2)
   return {
     id: nextId++,
@@ -94,6 +97,7 @@ export function BallLayer({ rushAt, surprise, interactive, onCatch }: LayerProps
   const timers = useRef<number[]>([])
   const [, rerender] = useReducer((n: number) => n + 1, 0)
   const [floaters, setFloaters] = useState<Floater[]>([])
+  const [shots, setShots] = useState<Shot[]>([])
   const [rushEnd, setRushEnd] = useState<number | null>(null)
 
   const later = useCallback((fn: () => void, delay: number) => {
@@ -193,6 +197,13 @@ export function BallLayer({ rushAt, surprise, interactive, onCatch }: LayerProps
     }
   }, [rushAt, initialRush, add])
 
+  // Animation de tir à chaque clic pendant le jeu : éclair, puis anneau et étincelles si touché.
+  const shoot = (x: number, y: number, hit: boolean) => {
+    const shot = { id: nextId++, x, y, hit }
+    setShots((ss) => [...ss, shot])
+    later(() => setShots((ss) => ss.filter((s) => s.id !== shot.id)), 600)
+  }
+
   const catchBall = (ball: Ball) => {
     if (ball.caught || !interactive) return
     ball.caught = true
@@ -215,6 +226,7 @@ export function BallLayer({ rushAt, surprise, interactive, onCatch }: LayerProps
     <div
       className={`balls ${interactive ? '' : 'balls--passive'} ${blocking ? 'balls--blocking' : ''}`}
       onMouseDown={blocking ? (e) => e.preventDefault() : undefined}
+      onPointerDown={blocking ? (e) => shoot(e.clientX, e.clientY, false) : undefined}
     >
       {rushEnd && <RushBanner end={rushEnd} />}
       {balls.current.map((b) => (
@@ -226,12 +238,24 @@ export function BallLayer({ rushAt, surprise, interactive, onCatch }: LayerProps
           }}
           className="ball"
           style={{ width: b.size, height: b.size, transform: `translate3d(${b.x}px, ${b.y}px, 0) rotate(${b.angle}deg)` }}
-          onPointerDown={() => catchBall(b)}
+          onPointerDown={(e) => {
+            if (!interactive || b.caught) return
+            e.stopPropagation()
+            shoot(e.clientX, e.clientY, true)
+            catchBall(b)
+          }}
           tabIndex={-1}
           aria-label="Attrape-moi !"
         >
           <img src={b.face} alt="" draggable={false} />
         </button>
+      ))}
+      {shots.map((s) => (
+        <span key={s.id} className={`shot ${s.hit ? 'shot--hit' : 'shot--miss'}`} style={{ left: s.x, top: s.y }}>
+          <span className="shot__flash" />
+          <span className="shot__ring" />
+          {s.hit && SPARKS.map((a) => <span key={a} className="shot__spark" style={{ '--a': `${a}deg` } as CSSProperties} />)}
+        </span>
       ))}
       {floaters.map((f) => (
         <span key={f.id} className="floater" style={{ left: f.x, top: f.y }}>
