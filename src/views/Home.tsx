@@ -77,7 +77,7 @@ export function Home() {
           </div>
         </div>
 
-        <p className="home__footer">OCTO Technology · There is a better way</p>
+        <p className="home__footer">OCTO Technology · There is a better way · v{__APP_VERSION__}</p>
       </div>
     </div>
   )

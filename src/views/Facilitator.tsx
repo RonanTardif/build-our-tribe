@@ -272,6 +272,9 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
               <a className="btn btn--small" href={screenUrl(session.code)} target="_blank" rel="noreferrer">Écran de projection ↗</a>
               <button className="btn btn--small" onClick={() => setPresenting(true)}>Mode présentation</button>
               <button className="btn btn--small" onClick={() => setShowQr(true)}>QR code</button>
+              <button className="btn btn--small btn--rush" onClick={rush} disabled={rushing} title="B">
+                {rushing ? '🚀 Rush en cours…' : '🚀 Rush'}
+              </button>
             </div>
             <p className="shortcuts">
               <kbd>←</kbd> <kbd>→</kbd> étapes · <kbd>R</kbd> révéler · <kbd>P</kbd> présentation · <kbd>Q</kbd> QR code · <kbd>B</kbd> rush
@@ -464,6 +467,7 @@ function Console({ data, refresh, presenting, setPresenting }: ConsoleProps) {
           </section>
 
           <ApiKeySettings />
+          <p className="version">version {__APP_VERSION__}</p>
         </aside>
       )}
 

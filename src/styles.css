@@ -399,3 +399,6 @@ kbd { font: inherit; font-weight: 700; font-size: 0.75rem; border: 1px solid var
 .mini-board li { display: flex; justify-content: space-between; }
 .panel__section .check { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
 .panel__section .check input { width: auto; }
+.btn--rush { background: var(--octo-red); border-color: var(--octo-red); color: #ffffff; }
+.btn--rush:hover:not(:disabled) { filter: brightness(1.1); border-color: var(--octo-red); }
+.version { margin: 0; font-size: 0.75rem; color: var(--muted); }
