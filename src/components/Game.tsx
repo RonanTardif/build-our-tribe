@@ -9,6 +9,9 @@ const FACES = Object.values(
   import.meta.glob('../assets/faces/*.{png,jpg,jpeg,webp}', { eager: true, import: 'default' }),
 ) as string[]
 
+// Décodées dès le chargement : la première balle s'affiche sans délai.
+for (const src of FACES) new Image().src = src
+
 const RUSH_MS = 10_000
 const RUSH_BALLS = 18
 const SURPRISE_VALUE = 3

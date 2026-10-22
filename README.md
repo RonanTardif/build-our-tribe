@@ -52,6 +52,10 @@ et rebondissent une dizaine de secondes : un clic dessus rapporte **3 jetons**. 
 (bouton ou touche <kbd>B</kbd>) : toutes les balles, très vite, pendant 10 secondes, **1 jeton** par balle attrapée.
 Le classement s'affiche sur l'écran projeté ; le premier gagne une bière.
 
+Les photos sont intégrées au JavaScript au build (data URI, voir `vite.config.ts`) : aucune image n'est rechargée
+pendant l'atelier, donc pas de balle blanche si la session GitLab Pages expire. Préfère des JPEG carrés d'environ
+128 px (~5 Ko chacun).
+
 Au premier jeton, chacun donne un prénom pour le classement. L'identité de jeu est distincte de celle des post-its :
 le classement nominatif ne permet pas de retrouver qui a écrit quoi.
 
