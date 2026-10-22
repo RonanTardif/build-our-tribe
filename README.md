@@ -61,7 +61,8 @@ le classement nominatif ne permet pas de retrouver qui a écrit quoi.
 
 ## Stack
 
-- Vite + React + TypeScript, build statique servi par **GitLab Pages** (`.gitlab-ci.yml`).
+- Vite + React + TypeScript, build statique servi par **GitLab Pages** (`.gitlab-ci.yml`) et en miroir par
+  **GitHub Pages** (`.github/workflows/pages.yml`).
 - **Supabase** (Postgres + Realtime) pour l'état partagé ; repli automatique en polling si le websocket ne passe pas.
 - **Claude** (`claude-opus-5-5`) appelé directement depuis le navigateur de l'animateur, chargé à la demande.
 
@@ -79,6 +80,9 @@ Base de données : exécute [`supabase/schema.sql`](supabase/schema.sql) une foi
 Déploiement : chaque push sur `main` publie sur GitLab Pages. Les variables `VITE_SUPABASE_*` viennent de
 `.env.production` (ou des variables CI/CD du projet, prioritaires). Pour que les participants accèdent à la page
 sans être membres du projet : *Settings → General → Visibility → Pages : Everyone*.
+
+Le même push alimente aussi le miroir GitHub (second push URL de `origin`), publié sur GitHub Pages avec la même
+base Supabase. Ce site-là est public, sans authentification : son URL suffit pour lire et écrire les sessions.
 
 ## Sécurité, en connaissance de cause
 
